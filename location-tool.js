@@ -38,7 +38,7 @@ LocationTool.prototype = {
      */
     _setupMonitor: function () {
         this._monitor
-            .add(['mapCenter', 'mapZoom', 'markerPosition'], this._onMapViewStateChange, this);
+            .add(['mapCenter', 'markerPosition'], this._onMapViewStateChange, this);
     },
     /**
      * Останавливаем наблюдение.
@@ -76,7 +76,6 @@ LocationTool.MapView = function (map) {
     map.geoObjects.add(this._marker);
     this.state = new ymaps.data.Manager({
         mapCenter: map.getCenter(),
-        mapZoom: map.getZoom(),
         markerPosition: map.getCenter()
     });
     this._attachHandlers();
@@ -191,8 +190,7 @@ LocationTool.MapView.prototype = {
             );
 
         this.state.set({
-            mapCenter: center,
-            mapZoom: zoom
+            mapCenter: center
         });
     },
     /**
@@ -205,8 +203,7 @@ LocationTool.MapView.prototype = {
      */
     _onMapBoundsChange: function (e) {
         this.state.set({
-            mapCenter: e.get('newCenter'),
-            mapZoom: e.get('newZoom')
+            mapCenter: e.get('newCenter')
         });
     },
     /**
@@ -245,7 +242,7 @@ LocationTool.DOMView.prototype = {
      * Отображаем изменений данных в DOM-структуре.
      * @function
      * @name DOMView.render
-     * @param {Object} data Объект с полями "mapCenter", "mapZoom" и "markerPosition".
+     * @param {Object} data Объект с полями "mapCenter" и "markerPosition".
      */
     render: function (data) {
         $.each(data, $.proxy(this._setData, this));
@@ -283,7 +280,7 @@ LocationTool.DOMView.prototype = {
             .find('#' + id)
             .val(
                 $.isArray(value)?
-                    $.map(value, this._toFixedNumber).join(', ') : value
+                    $.map(value.slice().reverse(), this._toFixedNumber).join(', ') : value
             );
     }
 };
