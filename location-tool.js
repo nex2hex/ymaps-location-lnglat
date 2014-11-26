@@ -78,6 +78,7 @@ LocationTool.MapView = function (map) {
         mapCenter: map.getCenter(),
         markerPosition: map.getCenter()
     });
+    this._map.controls.get('searchControl').options.set('noPlacemark', true);
     this._attachHandlers();
 };
 
@@ -98,6 +99,7 @@ LocationTool.MapView.prototype = {
     _attachHandlers: function () {
         this._map.events
             .add('boundschange', this._onMapBoundsChange, this)
+            .add('click', this._onMapClick, this)
             .add('actiontick', this._onMapAction, this)
             /* Во время плавного движения карты, у браузеров поддерживающих CSS3 Transition,
              * actiontick не кидается, поэтому используем этот прием через setInterval.
@@ -107,6 +109,8 @@ LocationTool.MapView.prototype = {
 
         this._marker.events
             .add('drag', this._onMarkerDrag, this);
+            
+        this._map.controls.get('searchControl').events.add('resultselect', this._onSelectSearchResult, this);
     },
     /**
      * Снимаем обработчики.
@@ -120,9 +124,13 @@ LocationTool.MapView.prototype = {
 
         this._map.events
             .remove('boundschange', this._onMapBoundsChange, this)
+            .remove('click', this._onMapClick, this)
             .remove('actiontick', this._onMapAction, this)
             .remove('actionbegin', this._onMapActionBegin, this)
             .remove('actionend', this._onMapActionEnd, this);
+            
+        this._map.controls.get('searchControl').events
+            .remove('resultselect', this._onSelectSearchResult, this);
     },
     /**
      * Обработчик перетаскивания метки.
@@ -207,6 +215,21 @@ LocationTool.MapView.prototype = {
         });
     },
     /**
+     * Устанавливает this._marker в точку с координатами coordinates
+     */
+    _movePlacemark: function (coordinates) {
+        this._marker.geometry.setCoordinates(coordinates);
+        this.state.set({
+            markerPosition: coordinates
+        });
+    }, 
+    /**
+     * При клике по карте передвигаем метку
+     */
+    _onMapClick: function(e) {
+        this._movePlacemark(e.get('coords'));
+    },
+    /**
      * Создание перетаскиваемого маркера.
      * @function
      * @private
@@ -217,6 +240,15 @@ LocationTool.MapView.prototype = {
             hintContent: 'Перетащите метку'
         }, {
             draggable: true
+        });
+    },
+    /**
+     * Выбор результата поиска в searchControl
+     */
+    _onSelectSearchResult: function(e) {
+        var self = this;
+        this._map.controls.get('searchControl').getResult(e.get('index')).then(function(res){ 
+            self._movePlacemark(res.geometry.getCoordinates());
         });
     }
 };
